@@ -49,6 +49,7 @@
                     <input type="text" name="telefono"
                            value="<%= valores.telefono || '' %>">
                 </label>
+                
 <label class="campo">
         Dirección
         <input type="text" name="direccion"
@@ -116,12 +117,13 @@
                     </label>
 
                     <label class="campo">
-                        Confirmar contraseña
-                        <div class="campo-password">
-                            <input type="password" name="password2" id="reg-password2" required minlength="8">
-                            <button type="button" class="btn-toggle-pass" data-target="reg-password2">👁</button>
-                        </div>
-                    </label>
+    Confirmar contraseña
+    <div class="campo-password">
+        <input type="password" name="confirmarPassword" id="reg-password2" required minlength="8">
+        <button type="button" class="btn-toggle-pass" data-target="reg-password2">👁</button>
+    </div>
+</label>
+
                 </div>
 
                 <button type="submit" class="btn-auth-primary">Registrarme</button>
