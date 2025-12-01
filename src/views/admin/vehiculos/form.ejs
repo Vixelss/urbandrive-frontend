@@ -1,3 +1,4 @@
+<!-- views/admin/vehiculos/form.ejs -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,8 +10,18 @@
 <body>
     <%- include('../../partials/adminHeader') %>
 
-
     <main class="admin-page">
+        <%
+          var v = vehiculo || {};
+          var anioActual = new Date().getFullYear();
+          var urlImagen = '';
+          if (v.UrlImagen) {
+            urlImagen = v.UrlImagen;
+          } else if (v.ImagenPrincipal && v.ImagenPrincipal.Url) {
+            urlImagen = v.ImagenPrincipal.Url;
+          }
+        %>
+
         <h1 class="admin-title">
             <%= modo === 'crear' ? 'Crear vehículo' : 'Editar vehículo' %>
         </h1>
@@ -30,178 +41,211 @@
         <% } %>
 
         <section class="admin-form-card">
-    <form method="post"
-          action="<%= modo === 'crear'
-                      ? '/admin/vehiculos/nuevo'
-                      : '/admin/vehiculos/' + vehiculo.IdVehiculo + '/editar' %>">
+            <form method="post"
+                  action="<%= modo === 'crear'
+                              ? '/admin/vehiculos/nuevo'
+                              : '/admin/vehiculos/' + v.IdVehiculo + '/editar' %>">
 
-        <div class="admin-form-grid">
-            <!-- fila 1 -->
-            <div class="admin-form-group">
-                <label for="Marca">Marca</label>
-                <input id="Marca" name="Marca" type="text"
-                       class="admin-input"
-                       maxlength="50" required
-                       value="<%= vehiculo.Marca || '' %>">
-            </div>
+                <div class="admin-form-grid">
+                    <!-- fila 1 -->
+                    <div class="admin-form-group">
+                        <label for="marca">Marca</label>
+                        <input
+                            type="text"
+                            id="marca"
+                            name="marca"
+                            value="<%= v.Marca || '' %>"
+                            required
+                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                            title="Solo letras y espacios.">
+                    </div>
 
-            <div class="admin-form-group">
-                <label for="Modelo">Modelo</label>
-                <input id="Modelo" name="Modelo" type="text"
-                       class="admin-input"
-                       maxlength="50" required
-                       value="<%= vehiculo.Modelo || '' %>">
-            </div>
+                    <div class="admin-form-group">
+                        <label for="modelo">Modelo</label>
+                        <input
+                            type="text"
+                            id="modelo"
+                            name="modelo"
+                            value="<%= v.Modelo || '' %>"
+                            required
+                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]+"
+                            title="Letras, números y espacios; sin caracteres especiales.">
+                    </div>
 
-            <div class="admin-form-group">
-                <label for="Anio">Año</label>
-                <input id="Anio" name="Anio" type="number"
-                       class="admin-input"
-                       min="1990"
-                       max="<%= new Date().getFullYear() %>"
-                       required
-                       data-only-int="1"
-                       value="<%= vehiculo.Anio || new Date().getFullYear() %>">
-            </div>
+                    <div class="admin-form-group">
+                        <label for="anio">Año</label>
+                        <input
+                            type="number"
+                            id="anio"
+                            name="anio"
+                            value="<%= v.Anio || '' %>"
+                            required
+                            min="1990"
+                            max="<%= anioActual %>"
+                            step="1"
+                            data-only-int="1"
+                            title="Solo números entre 1990 y el año actual, sin signos.">
+                    </div>
 
-            <!-- fila 2 -->
-            <div class="admin-form-group">
-                <label for="Capacidad">Capacidad (personas)</label>
-                <input id="Capacidad" name="Capacidad" type="number"
-                       class="admin-input"
-                       min="1" max="9" required
-                       data-only-int="1"
-                       value="<%= vehiculo.Capacidad || 4 %>">
-            </div>
+                    <!-- fila 2 -->
+                    <div class="admin-form-group">
+                        <label for="Capacidad">Capacidad (personas)</label>
+                        <input
+                            id="Capacidad"
+                            name="Capacidad"
+                            type="number"
+                            class="admin-input"
+                            min="1"
+                            max="9"
+                            required
+                            data-only-int="1"
+                            value="<%= (typeof v.Capacidad !== 'undefined' && v.Capacidad !== null) ? v.Capacidad : 4 %>">
+                    </div>
 
-            <div class="admin-form-group">
-                <label for="PrecioDia">Precio por día (USD)</label>
-                <input id="PrecioDia" name="PrecioDia" type="number"
-                       class="admin-input"
-                       step="0.01" min="1" required
-                       data-money="1"
-                       value="<%= vehiculo.PrecioDia || 1 %>">
-            </div>
+                    <div class="admin-form-group">
+                        <label for="precioDia">Precio por día (USD)</label>
+                        <input
+                            type="number"
+                            id="precioDia"
+                            name="precioDia"
+                            value="<%= v.PrecioDia || '' %>"
+                            required
+                            min="0"
+                            step="0.01"
+                            data-money="1"
+                            title="Solo números positivos, sin signos + o -.">
+                    </div>
 
-            <!-- fila 3 -->
-            <div class="admin-form-group">
-                <label for="IdCategoria">Categoría</label>
-                <select id="IdCategoria" name="IdCategoria"
-                        class="admin-input admin-select" required>
-                    <% if (Array.isArray(categorias)) { %>
-                        <% categorias.forEach(function (c) { %>
-                            <option value="<%= c.idCategoria || c.IdCategoria %>"
-                                <%= (vehiculo.IdCategoria == (c.idCategoria || c.IdCategoria)) ? 'selected' : '' %>>
-                                <%= c.Nombre || c.nombre %>
+                    <!-- fila 3 -->
+                    <div class="admin-form-group">
+                        <label for="IdCategoria">Categoría</label>
+                        <select id="IdCategoria" name="IdCategoria"
+                                class="admin-input admin-select" required>
+                            <% if (Array.isArray(categorias)) { %>
+                                <% categorias.forEach(function (c) { 
+                                    var idCat = c.idCategoria || c.IdCategoria;
+                                %>
+                                    <option value="<%= idCat %>"
+                                        <%= (v.IdCategoria == idCat) ? 'selected' : '' %>>
+                                        <%= c.Nombre || c.nombre %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label for="IdSucursal">Sucursal</label>
+                        <select id="IdSucursal" name="IdSucursal"
+                                class="admin-input admin-select" required>
+                            <% if (Array.isArray(sucursales)) { %>
+                                <% sucursales.forEach(function (s) { 
+                                    var idSuc = s.idSucursal || s.IdSucursal;
+                                %>
+                                    <option value="<%= idSuc %>"
+                                        <%= (v.IdSucursal == idSuc) ? 'selected' : '' %>>
+                                        <%= s.Nombre || s.nombre %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <!-- fila 4 -->
+                    <div class="admin-form-group">
+                        <label for="IdTransmision">Transmisión</label>
+                        <select id="IdTransmision" name="IdTransmision"
+                                class="admin-input admin-select" required>
+                            <% if (Array.isArray(transmisiones)) { %>
+                                <% transmisiones.forEach(function (t, index) { 
+                                    var id     = t.idTransmision || t.IdTransmision || (index + 1);
+                                    var nombre = t.Nombre || t.nombre || t.TransmisionNombre || t;
+                                %>
+                                    <option value="<%= id %>"
+                                        <%= (v.IdTransmision == id) ? 'selected' : '' %>>
+                                        <%= nombre %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+
+                    <div class="admin-form-group admin-form-group--full">
+                        <label for="imagenUrl">
+                            URL imagen
+                            <% if (!v || !v.IdVehiculo) { %>
+                                (obligatoria)
+                            <% } else { %>
+                                (opcional)
+                            <% } %>
+                        </label>
+                        <input
+                            type="url"
+                            id="imagenUrl"
+                            name="imagenUrl"
+                            value="<%= urlImagen %>"
+                            <%= !v || !v.IdVehiculo ? 'required' : '' %>
+                            title="URL completa de la imagen del vehículo.">
+                    </div>
+
+                    <!-- fila 5 -->
+                    <div class="admin-form-group admin-form-group--full">
+                        <label for="Estado">Estado</label>
+                        <select id="Estado" name="Estado"
+                                class="admin-input admin-select" required>
+                            <option value="Disponible"
+                                <%= (v.Estado || '') === 'Disponible' ? 'selected' : '' %>>
+                                Disponible
                             </option>
-                        <% }) %>
-                    <% } %>
-                </select>
-            </div>
-
-            <div class="admin-form-group">
-                <label for="IdSucursal">Sucursal</label>
-                <select id="IdSucursal" name="IdSucursal"
-                        class="admin-input admin-select" required>
-                    <% if (Array.isArray(sucursales)) { %>
-                        <% sucursales.forEach(function (s) { %>
-                            <option value="<%= s.idSucursal || s.IdSucursal %>"
-                                <%= (vehiculo.IdSucursal == (s.idSucursal || s.IdSucursal)) ? 'selected' : '' %>>
-                                <%= s.Nombre || s.nombre %>
+                            <option value="Mantenimiento"
+                                <%= (v.Estado || '') === 'Mantenimiento' ? 'selected' : '' %>>
+                                Mantenimiento
                             </option>
-                        <% }) %>
-                    <% } %>
-                </select>
-            </div>
+                            <option value="Inactivo"
+                                <%= (v.Estado || '') === 'Inactivo' ? 'selected' : '' %>>
+                                Inactivo
+                            </option>
+                        </select>
+                    </div>
 
-            <!-- fila 4 -->
-            <div class="admin-form-group">
-    <label for="IdTransmision">Transmisión</label>
-    <select id="IdTransmision" name="IdTransmision"
-            class="admin-input admin-select" required>
-        <% if (Array.isArray(transmisiones)) { %>
-            <% transmisiones.forEach(function (t, index) { 
-                // t puede ser string o un objeto
-                var id = t.idTransmision || t.IdTransmision || (index + 1);
-                var nombre = t.Nombre || t.nombre || t.TransmisionNombre || t;
-            %>
-                <option value="<%= id %>"
-                    <%= (vehiculo.IdTransmision == id) ? 'selected' : '' %>>
-                    <%= nombre %>
-                </option>
-            <% }) %>
-        <% } %>
-    </select>
-</div>
+                    <div class="admin-form-group admin-form-group--full">
+                        <label for="Descripcion">Descripción</label>
+                        <textarea id="Descripcion" name="Descripcion" rows="3"
+                                  class="admin-input"
+                                  maxlength="500"><%= v.Descripcion || '' %></textarea>
+                    </div>
+                </div>
 
+                <div class="admin-form-footer">
+                    <a href="/admin/vehiculos" class="admin-link">Volver</a>
+                    <button type="submit" class="admin-primary-btn">
+                        <%= modo === 'crear' ? 'Guardar vehículo' : 'Guardar cambios' %>
+                    </button>
+                </div>
+            </form>
+        </section>
 
-            <div class="admin-form-group admin-form-group--full">
-    <label for="UrlImagen">URL imagen (opcional)</label>
-    <input id="UrlImagen" name="UrlImagen" type="url"
-           class="admin-input"
-           value="<%= vehiculo.UrlImagen || '' %>">
-</div>
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            // Solo enteros (sin + ni -)
+            document.querySelectorAll('[data-only-int]').forEach(function (input) {
+              input.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '');
+              });
+            });
 
-
-            <!-- fila 5 -->
-            <div class="admin-form-group admin-form-group--full">
-                <label for="Estado">Estado</label>
-                <select id="Estado" name="Estado"
-                        class="admin-input admin-select" required>
-                    <option value="Disponible"
-                        <%= (vehiculo.Estado || '') === 'Disponible' ? 'selected' : '' %>>
-                        Disponible
-                    </option>
-                    <option value="Mantenimiento"
-                        <%= (vehiculo.Estado || '') === 'Mantenimiento' ? 'selected' : '' %>>
-                        Mantenimiento
-                    </option>
-                    <option value="Inactivo"
-                        <%= (vehiculo.Estado || '') === 'Inactivo' ? 'selected' : '' %>>
-                        Inactivo
-                    </option>
-                </select>
-            </div>
-
-            <div class="admin-form-group admin-form-group--full">
-                <label for="Descripcion">Descripción</label>
-                <textarea id="Descripcion" name="Descripcion" rows="3"
-                          class="admin-input"
-                          maxlength="500"><%= vehiculo.Descripcion || '' %></textarea>
-            </div>
-        </div>
-
-        <div class="admin-form-footer">
-            <a href="/admin/vehiculos" class="admin-link">Volver</a>
-            <button type="submit" class="admin-primary-btn">
-                <%= modo === 'crear' ? 'Guardar vehículo' : 'Guardar cambios' %>
-            </button>
-        </div>
-    </form>
-</section>
-
-<!-- validación para bloquear + y - en numéricos -->
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('[data-only-int]').forEach(function (input) {
-      input.addEventListener('input', function () {
-        this.value = this.value.replace(/[^\d]/g, '');
-      });
-    });
-
-    document.querySelectorAll('[data-money]').forEach(function (input) {
-      input.addEventListener('input', function () {
-        // solo números y punto
-        this.value = this.value.replace(/[^0-9.]/g, '');
-        const parts = this.value.split('.');
-        if (parts.length > 2) {
-          this.value = parts[0] + '.' + parts.slice(1).join('');
-        }
-      });
-    });
-  });
-</script>
-
+            // Solo números y punto, sin signos + -
+            document.querySelectorAll('[data-money]').forEach(function (input) {
+              input.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9.]/g, '');
+                const parts = this.value.split('.');
+                if (parts.length > 2) {
+                  this.value = parts[0] + '.' + parts.slice(1).join('');
+                }
+              });
+            });
+          });
+        </script>
     </main>
 </body>
 </html>

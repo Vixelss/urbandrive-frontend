@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <%- include('../../partials/adminHeader') %>
+
+  <main class="admin-page">
+    <% 
+      function soloFecha(f) {
+        if (!f) return '';
+        const s = String(f);
+        if (s.includes('T')) return s.slice(0, 10);   // 2025-11-20T00:00:00
+        return s.split(' ')[0];                       // 2025-11-20 00:00:00
+      }
+    %>
+
+    <section class="admin-header-row">
+      <div>
+        <h1 class="admin-title">Gestión de reservas</h1>
+        <p class="admin-subtitle">
+          Revisa, edita y administra todas las reservas realizadas.
+        </p>
+      </div>
+
+      <a href="/admin/reservas/nueva" class="admin-primary-btn">
+        + Nueva reserva
+      </a>
+    </section>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="admin-alert admin-alert-error"><%= error %></div>
+    <% } %>
+
+    <% if (!reservas || reservas.length === 0) { %>
+      <div class="admin-alert admin-alert-info">
+        No hay reservas registradas.
+      </div>
+    <% } else { %>
+      <div class="admin-table-wrapper">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Usuario</th>
+              <th>Vehículo</th>
+              <th>Fechas</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th class="admin-col-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% reservas.forEach(function (r) {
+                 const idReserva = r.IdReserva || r.idReserva;
+                 const nombreUsu = r.NombreUsuario || r.nombreUsuario || '';
+                 const correoUsu = r.CorreoUsuario || r.correoUsuario || '';
+                 const vehiculo  = r.VehiculoNombre || r.vehiculoNombre || '';
+                 const fechaIniRaw  = r.FechaInicio || r.fechaInicio || '';
+                 const fechaFinRaw  = r.FechaFin   || r.fechaFin   || '';
+                 const fechaIni = soloFecha(fechaIniRaw);
+                 const fechaFin = soloFecha(fechaFinRaw);
+                 const totalRaw  = (r.Total != null ? r.Total : (r.total != null ? r.total : 0));
+                 const total     = Number(totalRaw) || 0;
+                 const estadoRaw = (r.Estado || r.estado || 'PENDIENTE');
+                 const estado    = estadoRaw.charAt(0).toUpperCase() + estadoRaw.slice(1).toLowerCase();
+            %>
+              <tr>
+                <td><%= idReserva %></td>
+
+                <td>
+                  <%= nombreUsu || '-' %><br>
+                  <% if (correoUsu) { %>
+                    <small><%= correoUsu %></small>
+                  <% } %>
+                </td>
+
+                <td><%= vehiculo || '-' %></td>
+
+                <!-- Solo fecha, sin hora -->
+                <td>
+                  <div><%= fechaIni || '-' %></div>
+                  <% if (fechaFin) { %>
+                    <div><%= fechaFin %></div>
+                  <% } %>
+                </td>
+
+                <td>$ <%= total.toFixed(2) %></td>
+
+                <td>
+                  <span class="admin-badge-rol <%= estado.toLowerCase() %>">
+                    <%= estado %>
+                  </span>
+                </td>
+
+                <td>
+                  <div class="admin-actions">
+                    <a href="/admin/reservas/<%= idReserva %>/editar"
+                       class="admin-btn admin-btn-outline">
+                      Editar
+                    </a>
+
+                    <form id="form-delete-res-<%= idReserva %>"
+                          action="/admin/reservas/<%= idReserva %>/eliminar"
+                          method="post"
+                          style="display:none"></form>
+
+                    <button type="button"
+                            class="admin-btn admin-btn-outline admin-btn-danger btn-eliminar-res"
+                            data-id="<%= idReserva %>"
+                            data-info="<%= nombreUsu %> - <%= vehiculo %>">
+                      Borrar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal de confirmación para borrar reserva -->
+      <div id="modal-delete-res" class="admin-modal">
+        <div class="admin-modal-content">
+          <h3 class="admin-modal-title">Eliminar reserva</h3>
+          <p id="modal-delete-res-text" class="admin-modal-text">
+            ¿Seguro que quieres eliminar esta reserva?
+          </p>
+
+          <div class="admin-modal-actions">
+            <button type="button" id="btn-cancel-delete-res" class="admin-btn-secondary">
+              Cancelar
+            </button>
+            <button type="button" id="btn-confirm-delete-res" class="admin-btn-danger">
+              Sí, eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </main>
+
+  <script>
+    (function () {
+      const modal = document.getElementById('modal-delete-res');
+      if (!modal) return;
+
+      const texto = document.getElementById('modal-delete-res-text');
+      const btnCancel = document.getElementById('btn-cancel-delete-res');
+      const btnConfirm = document.getElementById('btn-confirm-delete-res');
+
+      let idAEliminar = null;
+
+      document.querySelectorAll('.btn-eliminar-res').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const id = btn.dataset.id;
+          const info = btn.dataset.info || '';
+          idAEliminar = id;
+
+          texto.textContent =
+            `¿Seguro que quieres eliminar la reserva #${id} (${info})?`;
+
+          modal.classList.add('show');
+        });
+      });
+
+      btnCancel.addEventListener('click', () => {
+        modal.classList.remove('show');
+        idAEliminar = null;
+      });
+
+      btnConfirm.addEventListener('click', () => {
+        if (!idAEliminar) return;
+        const form = document.getElementById('form-delete-res-' + idAEliminar);
+        if (form) form.submit();
+        modal.classList.remove('show');
+        idAEliminar = null;
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('show');
+          idAEliminar = null;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

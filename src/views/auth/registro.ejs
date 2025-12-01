@@ -27,34 +27,66 @@
                 <div class="auth-grid">
                     <label class="campo">
                         Nombres
-                        <input type="text" name="nombres" required
-                               value="<%= valores.nombres || '' %>">
+                        <input
+                            type="text"
+                            id="nombres"
+                            name="nombres"
+                            value="<%= valores.nombres || '' %>"
+                            required
+                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                            title="Solo letras y espacios.">
                     </label>
 
                     <label class="campo">
                         Apellidos
-                        <input type="text" name="apellidos" required
-                               value="<%= valores.apellidos || '' %>">
+                        <input
+                            type="text"
+                            id="apellidos"
+                            name="apellidos"
+                            value="<%= valores.apellidos || '' %>"
+                            required
+                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                            title="Solo letras y espacios.">
                     </label>
                 </div>
 
                 <label class="campo">
                     Correo electrónico
-                    <input type="email" name="email" required
-                           value="<%= valores.email || '' %>">
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        value="<%= valores.email || '' %>"
+                        pattern="^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.(com|net|org|ec|es)$"
+                        title="Ejemplo: usuario@gmail.com">
                 </label>
 
                 <label class="campo">
                     Teléfono
-                    <input type="text" name="telefono"
-                           value="<%= valores.telefono || '' %>">
+                    <input
+                        type="text"
+                        id="telefono"
+                        name="telefono"
+                        value="<%= valores.telefono || '' %>"
+                        required
+                        inputmode="numeric"
+                        pattern="\d{9,10}"
+                        title="Solo números (9 a 10 dígitos), sin signos ni espacios.">
                 </label>
-                
-<label class="campo">
-        Dirección
-        <input type="text" name="direccion"
-               value="<%= valores.direccion || '' %>">
-    </label>
+
+                <label class="campo">
+                    Dirección
+                    <input
+                        type="text"
+                        id="direccion"
+                        name="direccion"
+                        value="<%= valores.direccion || '' %>"
+                        required
+                        pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]+"
+                        title="Solo letras, números y espacios (sin caracteres especiales).">
+                </label>
+
                 <div class="auth-grid">
                     <label class="campo">
                         País
@@ -73,8 +105,16 @@
 
                     <label class="campo">
                         Edad
-                        <input type="number" name="edad" min="18" max="90" required
-                               value="<%= valores.edad || 18 %>">
+                        <input
+                            type="number"
+                            id="edad"
+                            name="edad"
+                            value="<%= valores.edad || '' %>"
+                            required
+                            min="18"
+                            max="90"
+                            step="1"
+                            title="Solo números entre 18 y 90.">
                     </label>
                 </div>
 
@@ -100,8 +140,12 @@
 
                     <label class="campo">
                         Identificación
-                        <input type="text" name="identificacion" id="identificacion" required
-                               value="<%= valores.identificacion || '' %>">
+                        <input
+                            type="text"
+                            name="identificacion"
+                            id="identificacion"
+                            required
+                            value="<%= valores.identificacion || '' %>">
                         <small id="identificacionHelp" class="texto-ayuda"></small>
                     </label>
                 </div>
@@ -110,20 +154,29 @@
                     <label class="campo">
                         Contraseña
                         <div class="campo-password">
-                            <input type="password" name="password" id="reg-password" required minlength="8">
+                            <input
+                                type="password"
+                                name="password"
+                                id="reg-password"
+                                required
+                                minlength="8">
                             <button type="button" class="btn-toggle-pass" data-target="reg-password">👁</button>
                         </div>
                         <small>Debe tener al menos 8 caracteres, con mayúsculas, minúsculas y números.</small>
                     </label>
 
                     <label class="campo">
-    Confirmar contraseña
-    <div class="campo-password">
-        <input type="password" name="confirmarPassword" id="reg-password2" required minlength="8">
-        <button type="button" class="btn-toggle-pass" data-target="reg-password2">👁</button>
-    </div>
-</label>
-
+                        Confirmar contraseña
+                        <div class="campo-password">
+                            <input
+                                type="password"
+                                name="confirmarPassword"
+                                id="reg-password2"
+                                required
+                                minlength="8">
+                            <button type="button" class="btn-toggle-pass" data-target="reg-password2">👁</button>
+                        </div>
+                    </label>
                 </div>
 
                 <button type="submit" class="btn-auth-primary">Registrarme</button>
@@ -138,25 +191,25 @@
 
     <script>
         // Mostrar / ocultar contraseñas
-        document.querySelectorAll('.btn-toggle-pass').forEach(btn => {
-            btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-toggle-pass').forEach(function (btn) {
+            btn.addEventListener('click', function () {
                 const targetId = btn.dataset.target;
                 const input = document.getElementById(targetId);
                 if (!input) return;
-                const esPassword = input.type === 'password';
-                input.type = esPassword ? 'text' : 'password';
-                btn.textContent = esPassword ? '🙈' : '👁';
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                btn.textContent = isPassword ? '🙈' : '👁';
             });
         });
 
         // Validación dinámica de identificación según tipo
         const tipoSelect = document.getElementById('tipoIdentificacion');
         const identInput = document.getElementById('identificacion');
-        const identHelp = document.getElementById('identificacionHelp');
+        const identHelp  = document.getElementById('identificacionHelp');
 
         function configurarIdentificacion() {
+            if (!tipoSelect || !identInput || !identHelp) return;
             const tipo = tipoSelect.value;
-            identInput.value = identInput.value || '';
             identInput.removeAttribute('pattern');
             identInput.removeAttribute('maxlength');
 
@@ -177,9 +230,31 @@
             }
         }
 
-        if (tipoSelect && identInput && identHelp) {
+        if (tipoSelect) {
             tipoSelect.addEventListener('change', configurarIdentificacion);
             configurarIdentificacion();
+        }
+
+        // Solo dígitos en teléfono (máx 10)
+        const telInput = document.getElementById('telefono');
+        if (telInput) {
+            telInput.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '').slice(0, 10);
+            });
+        }
+
+        // Solo dígitos en edad, entre 18 y 90
+        const edadInput = document.getElementById('edad');
+        if (edadInput) {
+            edadInput.addEventListener('input', function () {
+                this.value = this.value.replace(/\D/g, '').slice(0, 2);
+                if (this.value !== '') {
+                    let n = parseInt(this.value, 10);
+                    if (n < 18) n = 18;
+                    if (n > 90) n = 90;
+                    this.value = String(n);
+                }
+            });
         }
     </script>
 </body>

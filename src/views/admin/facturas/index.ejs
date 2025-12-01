@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <%- include('../../partials/adminHeader') %>
+
+  <main class="admin-page">
+    <section class="admin-header-row">
+      <div>
+        <h1 class="admin-title">Gestión de facturas</h1>
+        <p class="admin-subtitle">
+          Administra las facturas generadas por las reservas.
+        </p>
+      </div>
+
+      <a href="/admin/facturas/nueva" class="admin-primary-btn">
+        + Nueva factura
+      </a>
+    </section>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="admin-alert admin-alert-error"><%= error %></div>
+    <% } %>
+
+    <% if (!facturas || facturas.length === 0) { %>
+      <div class="admin-alert admin-alert-info">
+        No hay facturas registradas.
+      </div>
+    <% } else { %>
+      <div class="admin-table-wrapper">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Reserva (cliente / vehículo)</th>
+              <th>Enlace factura</th>
+              <th>Fecha emisión</th>
+              <th>Total</th>
+              <th class="admin-col-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% facturas.forEach(function (f) {
+                 const idFactura  = f.IdFactura  ?? f.idFactura;
+                 const idReserva  = f.IdReserva  ?? f.idReserva ?? f.id_reserva;
+                 const uriFactura = f.UriFactura ?? f.uriFactura ?? f.uri_factura;
+                 const fechaRaw   = f.FechaEmision ?? f.fechaEmision ?? f.fecha_emision ?? '';
+const fecha      = fechaRaw ? String(fechaRaw).slice(0, 10) : '';
+
+                 const valorRaw   = (f.ValorTotal != null
+                                      ? f.ValorTotal
+                                      : (f.valorTotal != null ? f.valorTotal : 0));
+                 const valor      = Number(valorRaw) || 0;
+
+                 // Texto más informativo para la reserva
+                 const textoReservaProp = f.TextoReserva || f.textoReserva;
+                 const nombreUsu  = f.NombreUsuario || f.nombreUsuario || '';
+                 const vehiculo   = f.VehiculoNombre || f.vehiculoNombre || '';
+                 const fechaIniRaw = f.FechaInicio || f.fechaInicio || '';
+                 const fechaIni   = fechaIniRaw ? String(fechaIniRaw).slice(0, 10) : '';
+
+                 let labelReserva = textoReservaProp;
+                 if (!labelReserva) {
+                   labelReserva = idReserva ? ('#' + idReserva) : '-';
+                   const partes = [];
+                   if (nombreUsu) partes.push(nombreUsu);
+                   if (vehiculo)  partes.push(vehiculo);
+                   if (fechaIni)  partes.push('(' + fechaIni + ')');
+                   if (partes.length) {
+                     labelReserva += ' - ' + partes.join(' - ');
+                   }
+                 }
+            %>
+              <tr>
+                <td><%= idFactura %></td>
+
+                <td><%= labelReserva %></td>
+
+                <td>
+                  <% if (uriFactura) { %>
+                    <a href="<%= uriFactura %>" target="_blank" class="admin-link">
+                      Ver PDF
+                    </a>
+                  <% } else { %>
+                    <span>-</span>
+                  <% } %>
+                </td>
+
+                <td><%= fecha || '-' %></td>
+                <td>$ <%= valor.toFixed(2) %></td>
+
+                <td>
+                  <div class="admin-actions">
+                    <a href="/admin/facturas/<%= idFactura %>/editar"
+                       class="admin-btn admin-btn-outline">
+                      Editar
+                    </a>
+
+                    <form id="form-delete-fact-<%= idFactura %>"
+                          action="/admin/facturas/<%= idFactura %>/eliminar"
+                          method="post"
+                          style="display:none"></form>
+
+                    <button type="button"
+                            class="admin-btn admin-btn-outline admin-btn-danger btn-eliminar-fact"
+                            data-id="<%= idFactura %>">
+                      Borrar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Modal de confirmación para borrar factura -->
+      <div id="modal-delete-fact" class="admin-modal">
+        <div class="admin-modal-content">
+          <h3 class="admin-modal-title">Eliminar factura</h3>
+          <p id="modal-delete-fact-text" class="admin-modal-text">
+            ¿Seguro que quieres eliminar esta factura?
+          </p>
+
+          <div class="admin-modal-actions">
+            <button type="button" id="btn-cancel-delete-fact" class="admin-btn-secondary">
+              Cancelar
+            </button>
+            <button type="button" id="btn-confirm-delete-fact" class="admin-btn-danger">
+              Sí, eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </main>
+
+  <script>
+    (function () {
+      const modal = document.getElementById('modal-delete-fact');
+      if (!modal) return;
+
+      const texto = document.getElementById('modal-delete-fact-text');
+      const btnCancel = document.getElementById('btn-cancel-delete-fact');
+      const btnConfirm = document.getElementById('btn-confirm-delete-fact');
+
+      let idAEliminar = null;
+
+      document.querySelectorAll('.btn-eliminar-fact').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const id = btn.dataset.id;
+          idAEliminar = id;
+
+          texto.textContent =
+            `¿Seguro que quieres eliminar la factura #${id}?`;
+
+          modal.classList.add('show');
+        });
+      });
+
+      btnCancel.addEventListener('click', () => {
+        modal.classList.remove('show');
+        idAEliminar = null;
+      });
+
+      btnConfirm.addEventListener('click', () => {
+        if (!idAEliminar) return;
+        const form = document.getElementById('form-delete-fact-' + idAEliminar);
+        if (form) form.submit();
+        modal.classList.remove('show');
+        idAEliminar = null;
+      });
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('show');
+          idAEliminar = null;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

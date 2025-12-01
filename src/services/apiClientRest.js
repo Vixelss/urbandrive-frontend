@@ -58,9 +58,9 @@ async function obtenerUsuarios() {
 // 2) "Login" local: busca por email y compara contraseña
 async function loginUsuarioPorListado(email, contrasena) {
   const usuarios = await obtenerUsuarios();
-
-  const usuario = usuarios.find(u =>
-    String(u.Email).toLowerCase() === String(email).toLowerCase()
+  const usuario = usuarios.find(
+    (u) =>
+      String(u.Email).toLowerCase() === String(email).toLowerCase()
   );
 
   if (!usuario) {
@@ -84,7 +84,10 @@ async function registrarUsuario(payload) {
     // Asumiendo respuesta: { data: { ...nuevoUsuario } }
     return resp.data && resp.data.data ? resp.data.data : null;
   } catch (error) {
-    console.error('Error al registrar usuario en la API:', error.response?.data || error.message);
+    console.error(
+      'Error al registrar usuario en la API:',
+      error.response?.data || error.message
+    );
     throw error;
   }
 }
@@ -111,7 +114,7 @@ async function getTransmisiones() {
 
     const mapa = new Map();
 
-    data.forEach(item => {
+    data.forEach((item) => {
       if (!item) return;
 
       // Caso 1: la API devuelve strings: "Manual", "Automática", "CVT"
@@ -129,16 +132,22 @@ async function getTransmisiones() {
 
       // Caso 2: objetos { id_transmision, nombre, descripcion, ... }
       const nombre = (item.nombre || item.Nombre || '').toString();
-      const desc   = (item.descripcion || item.Descripcion || '').toString();
-      const texto  = (nombre + ' ' + desc).toLowerCase();
+      const desc = (item.descripcion || item.Descripcion || '').toString();
+      const texto = (nombre + ' ' + desc).toLowerCase();
 
       let codigo = 'MT';
-      if (texto.includes('aut'))      codigo = 'AT';
+      if (texto.includes('aut')) codigo = 'AT';
       else if (texto.includes('cvt')) codigo = 'CVT';
       else if (texto.includes('man')) codigo = 'MT';
 
-      const label = desc || nombre ||
-        (codigo === 'MT' ? 'Manual' : (codigo === 'AT' ? 'Automática' : 'CVT'));
+      const label =
+        desc ||
+        nombre ||
+        (codigo === 'MT'
+          ? 'Manual'
+          : codigo === 'AT'
+          ? 'Automática'
+          : 'CVT');
 
       mapa.set(codigo, { codigo, nombre: label });
     });
@@ -182,7 +191,10 @@ async function obtenerDetalleCarrito(idCarrito) {
     const resp = await api.get(`/carrito/${idCarrito}/detalle`);
     return resp.data;
   } catch (error) {
-    console.error('Error al obtener detalle de carrito:', error.response?.data || error.message);
+    console.error(
+      'Error al obtener detalle de carrito:',
+      error.response?.data || error.message
+    );
     throw error;
   }
 }
@@ -196,7 +208,6 @@ async function eliminarItemCarrito(idItem) {
   const resp = await api.delete(`/carrito/item/${idItem}`);
   return resp.data;
 }
-
 
 // =========================================================
 // VEHICULOS - CRUD COMPLETO (panel admin)
@@ -222,7 +233,11 @@ async function getCategoriasVehiculo() {
     const resp = await api.get('/categoriasvehiculo');
     return resp.data;
   } catch (err) {
-    console.error('Error al obtener categorias desde la API:', err.response?.status, err.response?.data);
+    console.error(
+      'Error al obtener categorias desde la API:',
+      err.response?.status,
+      err.response?.data
+    );
 
     // ===== FALLBACK =====
     // Si la API de categorias falla,
@@ -231,7 +246,7 @@ async function getCategoriasVehiculo() {
       const vehiculos = await getVehiculos();
       const mapa = new Map();
 
-      vehiculos.forEach(v => {
+      vehiculos.forEach((v) => {
         const id =
           v.IdCategoria ||
           v.idCategoria ||
@@ -281,9 +296,11 @@ async function getSucursales() {
 async function getPromociones() {
   const resp = await api.get('/promociones');
   const data = resp.data;
+
   if (Array.isArray(data)) return data;
   if (Array.isArray(data.data)) return data.data;
   if (Array.isArray(data.Promociones)) return data.Promociones;
+
   return [];
 }
 
@@ -303,7 +320,8 @@ function normalizarUsuarioApi(raw) {
     Direccion: raw.Direccion ?? raw.direccion ?? '',
     Pais: raw.Pais ?? raw.pais ?? '',
     Edad: raw.Edad ?? raw.edad ?? null,
-    TipoIdentificacion: raw.TipoIdentificacion ?? raw.tipo_identificacion ?? '',
+    TipoIdentificacion:
+      raw.TipoIdentificacion ?? raw.tipo_identificacion ?? '',
     Identificacion: raw.Identificacion ?? raw.identificacion ?? '',
     Rol: raw.Rol ?? raw.rol ?? ''
   };
@@ -313,11 +331,17 @@ async function getUsuarios() {
   try {
     const resp = await api.get('/usuarios');
     const data = resp.data;
-    const lista = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
-
+    const lista = Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+      ? data
+      : [];
     return lista.map(normalizarUsuarioApi);
   } catch (err) {
-    console.error('Error al obtener usuarios:', err.response?.data || err.message);
+    console.error(
+      'Error al obtener usuarios:',
+      err.response?.data || err.message
+    );
     throw err;
   }
 }
@@ -329,7 +353,10 @@ async function getUsuarioPorId(id) {
     const raw = data?.data ?? data;
     return normalizarUsuarioApi(raw);
   } catch (err) {
-    console.error('Error al obtener usuario por id:', err.response?.data || err.message);
+    console.error(
+      'Error al obtener usuario por id:',
+      err.response?.data || err.message
+    );
     throw err;
   }
 }
@@ -352,7 +379,10 @@ async function crearUsuario(dto) {
     const resp = await api.post('/usuarios', body);
     return resp.data;
   } catch (err) {
-    console.error('Error al crear usuario:', err.response?.data || err.message);
+    console.error(
+      'Error al crear usuario:',
+      err.response?.data || err.message
+    );
     throw err;
   }
 }
@@ -376,7 +406,10 @@ async function actualizarUsuario(id, dto) {
     const resp = await api.put(`/usuarios/${id}`, body);
     return resp.data;
   } catch (err) {
-    console.error('Error al actualizar usuario:', err.response?.data || err.message);
+    console.error(
+      'Error al actualizar usuario:',
+      err.response?.data || err.message
+    );
     throw err;
   }
 }
@@ -386,22 +419,28 @@ async function eliminarUsuario(id) {
     const resp = await api.delete(`/usuarios/${id}`);
     return resp.data;
   } catch (err) {
-    console.error('Error al eliminar usuario:', err.response?.data || err.message);
+    console.error(
+      'Error al eliminar usuario:',
+      err.response?.data || err.message
+    );
     throw err;
   }
 }
 
+// =========================
+// RESERVAS (público + admin)
+// =========================
 
-// =========================
-// RESERVAS
-// =========================
 async function crearReserva(reservaDto) {
   try {
     const resp = await api.post('/reservas', reservaDto);
     // Si la API envuelve en { data: { ... } }
     return resp.data?.data ?? resp.data;
   } catch (err) {
-    console.error('Error al crear reserva:', err.response?.data || err.message);
+    console.error(
+      'Error al crear reserva:',
+      err.response?.data || err.message
+    );
     throw err;
   }
 }
@@ -410,12 +449,16 @@ async function getReservasPorUsuario(idUsuario) {
   try {
     const resp = await api.get(`/reservas/usuario/${idUsuario}`);
     const data = resp.data;
+
     // Puede venir como arreglo directo o en data
     if (Array.isArray(data)) return data;
     if (Array.isArray(data?.data)) return data.data;
     return [];
   } catch (err) {
-    console.error('Error al obtener reservas del usuario:', err.response?.data || err.message);
+    console.error(
+      'Error al obtener reservas del usuario:',
+      err.response?.data || err.message
+    );
     throw err;
   }
 }
@@ -427,110 +470,140 @@ async function getReservaPorId(idReserva) {
     // Igual, defendemos por si viene envuelto
     return data?.data ?? data;
   } catch (err) {
-    console.error('Error al obtener reserva por id:', err.response?.data || err.message);
+    console.error(
+      'Error al obtener reserva por id:',
+      err.response?.data || err.message
+    );
     throw err;
   }
 }
 
-async function verDetalleReserva(req, res) {
-  if (!req.session.usuario) {
-    return res.redirect('/login?returnUrl=/reservas');
-  }
-
-  const rawId = req.params.id;
-  const idReserva = parseInt(rawId, 10);
-  if (!idReserva || Number.isNaN(idReserva)) {
-    return res.redirect('/reservas');
-  }
-
+async function getReservas() {
   try {
-    const reserva = await apiClient.getReservaPorId(idReserva);
-    if (!reserva) {
-      return res.redirect('/reservas');
-    }
-
-    const usuario = req.session.usuario || {};
-
-    // ==============================
-    // Nombre y correo del cliente
-    // ==============================
-    const clienteNombre =
-      reserva.NombreUsuario ||
-      reserva.nombreUsuario ||
-      [
-        usuario.Nombre || usuario.nombre,
-        usuario.Apellido || usuario.apellido
-      ]
-        .filter(Boolean)
-        .join(' ') ||
-      'Cliente UrbanDrive';
-
-    const clienteCorreo =
-      reserva.CorreoUsuario ||
-      reserva.UsuarioCorreo ||
-      usuario.Email ||
-      usuario.email ||
-      '';
-
-    // ==============================
-    // Totales e IVA
-    // ==============================
-    const subtotal = Number(reserva.Total ?? reserva.total ?? 0) || 0;
-
-    const iva = +(subtotal * 0.12).toFixed(2);
-    const totalConIva = +(subtotal + iva).toFixed(2);
-
-    // ==============================
-    // Precio por día
-    // ==============================
-    const fechaInicioStr = reserva.FechaInicio || reserva.fechaInicio;
-    const fechaFinStr = reserva.FechaFin || reserva.fechaFin;
-
-    let precioDia = subtotal;
-
-    try {
-      const inicioDate = fechaInicioStr ? new Date(fechaInicioStr) : null;
-      const finDate = fechaFinStr ? new Date(fechaFinStr) : null;
-
-      if (inicioDate && finDate) {
-        const diffMs = finDate.getTime() - inicioDate.getTime();
-        let dias = Math.round(diffMs / (1000 * 60 * 60 * 24));
-        if (dias <= 0) dias = 1;
-        precioDia = dias ? subtotal / dias : subtotal;
-      }
-    } catch (e) {
-      console.warn('No se pudo calcular precio por dia:', e.message);
-    }
-
-    return res.render('reservas/detalle', {
-      titulo: 'Resumen de tu reserva',
-      reserva,
-      subtotal,
-      iva,
-      totalConIva,
-      precioDia,
-      clienteNombre,
-      clienteCorreo,
-      usuario: req.session.usuario
-    });
+    const resp = await api.get('/reservas');
+    const data = resp.data;
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.data)) return data.data;
+    return [];
   } catch (err) {
     console.error(
-      'Error al obtener detalle de reserva:',
+      'Error al obtener reservas:',
       err.response?.data || err.message
     );
-
-    return res.status(500).render('reservas/index', {
-      titulo: 'Mis reservas',
-      reservas: [],
-      error: 'No se pudo cargar el detalle de la reserva.',
-      usuario: req.session.usuario
-    });
+    throw err;
   }
 }
+
+async function actualizarReserva(idReserva, reservaDto) {
+  try {
+    const resp = await api.put(`/reservas/${idReserva}`, reservaDto);
+    return resp.data?.data ?? resp.data;
+  } catch (err) {
+    console.error(
+      'Error al actualizar reserva:',
+      err.response?.data || err.message
+    );
+    throw err;
+  }
+}
+
+async function eliminarReserva(idReserva) {
+  try {
+    const resp = await api.delete(`/reservas/${idReserva}`);
+    return resp.data?.data ?? resp.data;
+  } catch (err) {
+    console.error(
+      'Error al eliminar reserva:',
+      err.response?.data || err.message
+    );
+    throw err;
+  }
+}
+
+// =======================
+// RESERVAS (ADMIN)
+// =======================
+
+async function getReservasAdmin() {
+  const resp = await api.get('/reservas');
+  const data = resp.data;
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
+
+async function getReservaPorId(idReserva) {
+  const resp = await api.get(`/reservas/${idReserva}`);
+  return resp.data;
+}
+
+async function crearReservaAdmin(reserva) {
+  const resp = await api.post('/reservas', reserva);
+  return resp.data;
+}
+
+async function actualizarReservaAdmin(idReserva, reserva) {
+  const resp = await api.put(`/reservas/${idReserva}`, reserva);
+  return resp.data;
+}
+
+async function eliminarReservaAdmin(idReserva) {
+  const resp = await api.delete(`/reservas/${idReserva}`);
+  return resp.data;
+}
+
+async function cambiarEstadoReserva(idReserva, nuevoEstado) {
+  const resp = await api.patch(`/reservas/${idReserva}/estado/${nuevoEstado}`);
+  return resp.data;
+}
+
+// =======================
+// FACTURAS (ADMIN)
+// =======================
+
+// =======================
+// FACTURAS (ADMIN)
+// =======================
+async function getFacturasAdmin() {
+  const resp = await api.get('/facturas');
+  const data = resp.data;
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
+
+
+async function getFacturaPorId(idFactura) {
+  const resp = await api.get(`/facturas/${idFactura}`);
+  const data = resp.data;
+  return data?.data ?? data;
+}
+
+
+async function crearFacturaAdmin(factura) {
+  const resp = await api.post('/facturas', factura);
+  return resp.data;
+}
+
+async function actualizarFacturaAdmin(idFactura, factura) {
+  const resp = await api.put(`/facturas/${idFactura}`, factura);
+  return resp.data;
+}
+
+async function eliminarFacturaAdmin(idFactura) {
+  const resp = await api.delete(`/facturas/${idFactura}`);
+  return resp.data;
+}
+
 
 // =======================================
 // Exportar TODO
 // =======================================
+
 module.exports = {
   // vehículos (público + admin)
   getVehiculos,
@@ -562,8 +635,25 @@ module.exports = {
   obtenerDetalleCarrito,
   getCarritoPorUsuario,
   eliminarItemCarrito,
+
+  // reservas (público + admin)
   crearReserva,
   getReservasPorUsuario,
   getReservaPorId,
-  verDetalleReserva
+  getReservas,
+  actualizarReserva,
+  eliminarReserva,
+
+  // facturas (admin)
+  getReservasAdmin,
+  getReservaPorId,
+  crearReservaAdmin,
+  actualizarReservaAdmin,
+  eliminarReservaAdmin,
+  cambiarEstadoReserva,
+  getFacturasAdmin,
+  getFacturaPorId,
+  crearFacturaAdmin,
+  actualizarFacturaAdmin,
+  eliminarFacturaAdmin
 };

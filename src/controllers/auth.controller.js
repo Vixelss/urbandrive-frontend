@@ -94,16 +94,15 @@ async function procesarRegistro(req, res) {
     email,
     telefono,
     pais,
+    edad,
     tipoIdentificacion,
     identificacion,
-    edad,
     direccion,
     password,
     confirmarPassword
   } = req.body;
 
   const errores = [];
-
   const valores = {
     nombres,
     apellidos,
@@ -116,28 +115,84 @@ async function procesarRegistro(req, res) {
     edad
   };
 
-  // ---------- Validaciones basicas ----------
+  // ==========================
+  // 1) Campos obligatorios
+  // ==========================
   if (
-    !nombres || !apellidos || !email || !telefono || !pais ||
-    !tipoIdentificacion || !identificacion || !edad ||
-    !direccion || !password || !confirmarPassword
+    !nombres ||
+    !apellidos ||
+    !email ||
+    !telefono ||
+    !pais ||
+    !tipoIdentificacion ||
+    !identificacion ||
+    !edad ||
+    !direccion ||
+    !password ||
+    !confirmarPassword
   ) {
     errores.push('Todos los campos son obligatorios.');
   }
 
-  // Email
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Regex reutilizables
+  const soloLetrasRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+  const soloDigitosRegex = /^\d+$/;
+  const direccionRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]+$/;
+
+  // ========================================
+  // 2) Nombres / Apellidos (solo letras)
+  // ========================================
+  if (nombres && !soloLetrasRegex.test(nombres)) {
+    errores.push('El nombre solo puede contener letras y espacios.');
+  }
+
+  if (apellidos && !soloLetrasRegex.test(apellidos)) {
+    errores.push('Los apellidos solo pueden contener letras y espacios.');
+  }
+
+  // ========================================
+  // 3) Teléfono (solo números, 9 a 10 dígitos)
+  // ========================================
+  if (telefono) {
+    if (!soloDigitosRegex.test(telefono)) {
+      errores.push('El teléfono solo puede contener números (sin signos).');
+    } else if (telefono.length < 9 || telefono.length > 10) {
+      errores.push('El teléfono debe tener entre 9 y 10 dígitos.');
+    }
+  }
+
+  // ========================================
+  // 4) Dirección (sin caracteres especiales)
+  //    letras + números + espacios
+  // ========================================
+  if (direccion && !direccionRegex.test(direccion)) {
+    errores.push('La dirección solo puede contener letras, números y espacios.');
+  }
+
+  // ==========================
+  // 5) Email (sin dominios raros tipo .com.es)
+  // ==========================
+  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.(com|net|org|ec|es)$/;
   if (email && !emailRegex.test(email)) {
     errores.push('El correo electrónico no tiene un formato válido.');
   }
 
-  // Edad minima 18
-  const edadNum = parseInt(edad, 10);
-  if (isNaN(edadNum) || edadNum < 18) {
-    errores.push('Debes tener al menos 18 años para registrarte.');
+  // ==========================
+  // 6) Edad (solo dígitos, 18–90)
+  // ==========================
+  let edadNum = null;
+  if (!soloDigitosRegex.test(edad || '')) {
+    errores.push('La edad debe contener solo números, sin signos.');
+  } else {
+    edadNum = parseInt(edad, 10);
+    if (isNaN(edadNum) || edadNum < 18 || edadNum > 90) {
+      errores.push('Debes tener una edad entre 18 y 90 años para registrarte.');
+    }
   }
 
-  // Contraseña segura
+  // ==========================
+  // 7) Contraseña segura
+  // ==========================
   const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
   if (!passRegex.test(password || '')) {
     errores.push(
@@ -145,28 +200,39 @@ async function procesarRegistro(req, res) {
     );
   }
 
-  // Confirmacion de contraseña
   if (password !== confirmarPassword) {
     errores.push('Las contraseñas no coinciden.');
   }
 
-  // Validacion de identificacion segun tipo
+  // ==========================
+  // 8) Identificación
+  // ==========================
   if (tipoIdentificacion === 'CI') {
-    if (!/^\d{10}$/.test(identificacion)) {
+    // Cédula ecuatoriana simple: 10 dígitos
+    if (!/^\d{10}$/.test(identificacion || '')) {
       errores.push('La cédula debe tener exactamente 10 dígitos numéricos.');
     }
   } else if (tipoIdentificacion === 'PASAPORTE') {
-    if (!/^[A-Za-z0-9]{6,15}$/.test(identificacion)) {
-      errores.push('El pasaporte debe tener entre 6 y 15 caracteres alfanuméricos.');
+    // Pasaporte: 6-15 alfanuméricos
+    if (!/^[A-Za-z0-9]{6,15}$/.test(identificacion || '')) {
+      errores.push(
+        'El pasaporte debe tener entre 6 y 15 caracteres alfanuméricos.'
+      );
     }
   } else if (tipoIdentificacion === 'LICENCIA') {
-    if (!/^[A-Za-z0-9-]{6,20}$/.test(identificacion)) {
-      errores.push('La licencia debe tener entre 6 y 20 caracteres (letras, números o guiones).');
+    // Licencia: 6-20 letras/números/guiones
+    if (!/^[A-Za-z0-9-]{6,20}$/.test(identificacion || '')) {
+      errores.push(
+        'La licencia debe tener entre 6 y 20 caracteres (letras, números o guiones).'
+      );
     }
   } else {
     errores.push('Debes seleccionar un tipo de identificación válido.');
   }
 
+  // ==========================
+  // 9) Si hay errores → re-render
+  // ==========================
   if (errores.length > 0) {
     return res.status(400).render('auth/registro', {
       titulo: 'Crear cuenta',
@@ -175,7 +241,9 @@ async function procesarRegistro(req, res) {
     });
   }
 
-  // ---------- Llamada a la API ----------
+  // ==========================
+  // 10) Llamada a la API
+  // ==========================
   const payload = {
     Nombre: nombres,
     Apellido: apellidos,
@@ -191,8 +259,7 @@ async function procesarRegistro(req, res) {
   };
 
   try {
-    const resp = await apiClient.registrarUsuario(payload);
-    const nuevoUsuario = resp?.data || resp;
+    const nuevoUsuario = await apiClient.registrarUsuario(payload);
 
     if (!nuevoUsuario) {
       return res.status(500).render('auth/registro', {
@@ -202,18 +269,22 @@ async function procesarRegistro(req, res) {
       });
     }
 
+    // iniciar sesión directo después de registrarse
     req.session.usuario = {
-      id: nuevoUsuario.IdUsuario || nuevoUsuario.idUsuario || nuevoUsuario.id,
-      nombres: nuevoUsuario.Nombre || nombres,
-      apellidos: nuevoUsuario.Apellido || apellidos,
-      email: nuevoUsuario.Email || email,
-      rol: nuevoUsuario.Rol || 'Cliente',
-      pais: nuevoUsuario.Pais || pais
+      id: nuevoUsuario.IdUsuario,
+      nombres: nuevoUsuario.Nombre,
+      apellidos: nuevoUsuario.Apellido,
+      email: nuevoUsuario.Email,
+      rol: nuevoUsuario.Rol,
+      pais: nuevoUsuario.Pais
     };
 
     res.redirect('/vehiculos');
   } catch (err) {
-    console.error('Error registrando usuario:', err.response?.data || err.message);
+    console.error(
+      'Error registrando usuario:',
+      err.response?.data || err.message
+    );
     res.status(500).render('auth/registro', {
       titulo: 'Crear cuenta',
       errores: ['Ocurrió un error al registrar el usuario.'],

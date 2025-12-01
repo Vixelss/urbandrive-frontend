@@ -36,4 +36,25 @@ router.post('/usuarios/:id/editar', adminController.actualizarUsuario);
 
 router.post('/usuarios/:id/eliminar', adminController.eliminarUsuario);
 
+// =======================
+// Reservas (admin)
+// =======================
+router.get('/reservas', adminController.listaReservas);
+router.get('/reservas/nueva', adminController.formNuevaReserva);
+router.post('/reservas/nueva', adminController.crearReserva);
+router.get('/reservas/:id/editar', adminController.formEditarReserva);
+router.post('/reservas/:id/editar', adminController.actualizarReserva);
+router.post('/reservas/:id/eliminar', adminController.eliminarReserva);
+router.post('/reservas/:id/cambiar-estado', adminController.cambiarEstadoReservaController);
+
+// =======================
+// Facturas (admin)
+// =======================
+router.get('/facturas', adminController.listaFacturas);
+router.get('/facturas/nueva', adminController.formNuevaFactura);
+router.post('/facturas/nueva', adminController.crearFactura);
+router.get('/facturas/:id/editar', adminController.formEditarFactura);
+router.post('/facturas/:id/editar', adminController.actualizarFactura);
+router.post('/facturas/:id/eliminar', adminController.eliminarFactura);
+
 module.exports = router;

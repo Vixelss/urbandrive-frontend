@@ -20,12 +20,11 @@
         </section>
 
         <%
-          // Usuario que viene del controlador (edición) o {} (creación)
-          var u = (typeof usuarioForm !== 'undefined' && usuarioForm) ? usuarioForm : {};
-          var esEdicion   = !!u.IdUsuario;
-          var tipoIdSel   = (u.TipoIdentificacion || '').toUpperCase() || 'CI';
-          var rolSel      = u.Rol || 'Cliente';
-          var paisSel     = u.Pais || 'Ecuador';
+          var u          = (typeof usuarioForm !== 'undefined' && usuarioForm) ? usuarioForm : {};
+          var esEdicion  = !!u.IdUsuario;
+          var tipoIdSel  = (u.TipoIdentificacion || '').toUpperCase() || 'CI';
+          var rolSel     = u.Rol || 'Cliente';
+          var paisSel    = u.Pais || 'Ecuador';
         %>
 
         <section class="admin-card admin-card-form">
@@ -57,6 +56,8 @@
                             name="nombres"
                             type="text"
                             required
+                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                            title="Solo letras y espacios."
                             value="<%= u.Nombre || '' %>">
                     </div>
 
@@ -68,6 +69,8 @@
                             name="apellidos"
                             type="text"
                             required
+                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+"
+                            title="Solo letras y espacios."
                             value="<%= u.Apellido || '' %>">
                     </div>
 
@@ -79,18 +82,24 @@
                             name="email"
                             type="email"
                             required
+                            pattern="^[A-Za-z0-9._%+-]+@[A-Za-z]{3,15}\.(com|net|org|ec|es)$"
+                            title="Ejemplo: usuario@gmail.com"
                             value="<%= u.Email || '' %>">
                     </div>
 
-                    <!-- Contraseña -->
+                    <!-- Contraseña (texto visible) -->
                     <div class="admin-field">
                         <label for="contrasena">Contraseña</label>
                         <input
                             id="contrasena"
                             name="contrasena"
-                            type="password"
+                            type="text"
+                            minlength="8"
                             required
                             value="<%= u.Contrasena || '' %>">
+                        <small class="admin-help-text">
+                            Mínimo 8 caracteres con mayúsculas, minúsculas y números.
+                        </small>
                     </div>
 
                     <!-- Dirección -->
@@ -101,6 +110,8 @@
                             name="direccion"
                             type="text"
                             required
+                            pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]+"
+                            title="Solo letras, números y espacios."
                             value="<%= u.Direccion || '' %>">
                     </div>
 
@@ -122,19 +133,21 @@
 
                     <!-- Edad -->
                     <div class="admin-field">
-    <label for="edad">Edad</label>
-    <input
-        id="edad"
-        name="edad"
-        type="text"
-        inputmode="numeric"
-        required
-        value="<%= u.Edad || '' %>">
-    <small class="admin-help-text">
-        Solo números, entre 18 y 90 años.
-    </small>
-</div>
-
+                        <label for="edad">Edad</label>
+                        <input
+                            id="edad"
+                            name="edad"
+                            type="number"
+                            inputmode="numeric"
+                            required
+                            min="18"
+                            max="90"
+                            step="1"
+                            value="<%= u.Edad || '' %>">
+                        <small class="admin-help-text">
+                            Solo números, entre 18 y 90 años.
+                        </small>
+                    </div>
 
                     <!-- Tipo identificación -->
                     <div class="admin-field">
@@ -208,24 +221,23 @@
             identInput.removeAttribute('maxlength');
 
             if (tipo === 'CI') {
-  identInput.pattern = '\\d{10}';
-  identInput.maxLength = 10;
-  identHelp.textContent =
-    'Cédula ecuatoriana: exactamente 10 dígitos numéricos.';
-} else if (tipo === 'PASAPORTE') {
-  identInput.pattern = '[A-Za-z0-9]{6,15}';
-  identInput.maxLength = 15;
-  identHelp.textContent =
-    'Pasaporte: 6 a 15 caracteres alfanuméricos.';
-} else if (tipo === 'LICENCIA') {
-  identInput.pattern = '[A-Za-z0-9-]{6,20}';
-  identInput.maxLength = 20;
-  identHelp.textContent =
-    'Licencia: 6 a 20 caracteres; letras, números o guiones.';
-} else {
-  identHelp.textContent = '';
-}
-
+              identInput.pattern   = '\\d{10}';
+              identInput.maxLength = 10;
+              identHelp.textContent =
+                'Cédula ecuatoriana: exactamente 10 dígitos numéricos.';
+            } else if (tipo === 'PASAPORTE') {
+              identInput.pattern   = '[A-Za-z0-9]{6,15}';
+              identInput.maxLength = 15;
+              identHelp.textContent =
+                'Pasaporte: 6 a 15 caracteres alfanuméricos.';
+            } else if (tipo === 'LICENCIA') {
+              identInput.pattern   = '[A-Za-z0-9-]{6,20}';
+              identInput.maxLength = 20;
+              identHelp.textContent =
+                'Licencia: 6 a 20 caracteres; letras, números o guiones.';
+            } else {
+              identHelp.textContent = '';
+            }
           }
 
           tipoSelect.addEventListener('change', configurarIdentificacion);
@@ -235,8 +247,7 @@
         // ----- Solo números en edad -----
         if (edadInput) {
           edadInput.addEventListener('input', function () {
-            // quitar todo lo que no sea dígito
-            this.value = this.value.replace(/\\D/g, '').slice(0, 3);
+            this.value = this.value.replace(/\D/g, '');
           });
         }
       })();
